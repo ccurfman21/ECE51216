@@ -14,9 +14,7 @@ Due Date: 05/03/2024
 Description:
     Implementing a SAT solver based on DPLL backtracking algoriumthm using two advanced 
     heuristics
-
-
-    
+   
 """
 
 # Imports
