@@ -36,6 +36,37 @@ import numpy
 
 # Functions
 
+def read_file(file_path):
+    """ Read text file """
+    if os.path.exists(file_path):
+        with open(file_path, "r") as fo:
+            for line in fo:
+                if "p cnf" in line:
+                    file_contents = fo.read()       
+        fo.close()    
+        return file_contents
+    else:
+        return "File Does Not Exist"
+    
+def parsing_CNF_file(file_string):
+    """ Parse CNF File into list"""
+    cnf = []
+    cnf = [i for i in file_string.split('\n')]
+
+    for j in range(len(cnf)): 
+        if cnf[j] not in ['','%',' ','0']:
+            cnf[j] = [int(x) for x in cnf[j].split()] #convert to integers
+            if 0 in cnf[j]:
+                cnf[j].remove(0)
+    try:
+        index = cnf.index('%')
+        cnf = cnf[:index]
+    except ValueError:
+        cnf = cnf
+
+    return cnf
+        
+
 #____ Unit Propagation ____
 """
     The algorithm starts by simplifying the formula using unit propagation. A unit clause is a clause with only one literal. 
@@ -74,8 +105,10 @@ import numpy
 
 #____ Main ____
 def main():
-    print("Place Holder")
-    
+    raw_file = read_file(r'C:\Users\Administrator\Documents\GitHub\ECE51216\aim-50-1_6-no-1.cnf')
+    #print(raw_file)
+    parsed_file = parsing_CNF_file(raw_file)
+    print(parsed_file)
   
 
 # Main body
