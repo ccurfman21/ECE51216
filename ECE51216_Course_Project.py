@@ -111,7 +111,7 @@ def parsing_CNF_file(file_string):
     The algorithm terminates when either a satisfying assignment is found (i.e., all clauses are satisfied) or it exhaustively explores all possible assignments without finding a satisfying one.
 """
 
-#parse 2
+
 
 def parse(cnf_text):
     """ Function That will open the text file and create a list of literals """
@@ -137,42 +137,109 @@ def parse(cnf_text):
         return equation 
     except FileNotFoundError:
         print("File not found")
+
+def sat_solver_DPLL(clauses,assignment={}):
+    #check for empty clauses
+    def check_empty_clauses(clauses):
+        if any(len(clause) == 0 for clause in clauses):
+            return True
     
+    #check if solved   
+    def check_solved(clauses, assignment):
+        count = 0
+        not_sat = False
+        for clause in clauses:
+            for literal in clause:
+                if literal in assignment:
+                    if  literal > 0:
+                        test = True
+                    else:
+                        test = False       
+                    if assignment[literal] == test:
+                        count += 1
+                        break
+                    elif (literal.index() + 1) == len(clause):
+                        not_sat = True  
+            if not_sat:
+                break
+            elif count == len(clauses):
+                return True
+        return False
+
+    #check for unit propagation
+    def unit_propagation(clauses,assignment):
+        for clause in clauses:
+            if len(clause) == 1:
+                if clause[0] > 0:
+                    assignment[clause[0]] = True
+                else:
+                    assignment[clause[0]] = False
+        return assignment
+    
+    def inner_DPLL_main(clauses, assignment):
+        
+        unsat = check_empty_clauses(clauses)
+        
+        if unsat:
+            return ['Empty Clause', 'UNSAT']
+        
+        sat = check_solved(clauses, assignment)
+        if sat:
+            return [assignment, 'SAT']
+        
+        assignment = unit_propagation(clauses, assignment)
+        
+        
+        
+        sat = check_solved(clauses, assignment)
+        if sat:
+            return [assignment, 'SAT']
+    return inner_DPLL_main(clauses, assignment)
+
+def createFileList(directory):
+    #create file list from directory
+    cnf_file_list = []
+    for file in os.listdir(directory):
+        if os.path.isfile(os.path.join(directory, file)):
+            if file.endswith('.cnf'):
+                cnf_file_list.append(file)
+    return cnf_file_list
+
+
 
 #____ Main ____
 def main():
     
     start = timeit.default_timer() #start runtime
+    for i in range(10):
+        test_clauses = [[1,2,3],[1],[-1,4,-6],[5,3,-4]]
+        assignment = {-4:False, -6:False}
+        
+        ans = sat_solver_DPLL(test_clauses,assignment)
+       
+        print(ans)
     
+    
+    """
     directory = r'C:\\Users\\Administrator\\Documents\\GitHub\\ECE51216\\'
-    cnf_file_list = []
+    file = 'uf20-01.cnf'
     
-    #create file list from directory 
-    for file in os.listdir(directory):
-        if os.path.isfile(os.path.join(directory, file)):
-            if file.endswith('.cnf'):
-                cnf_file_list.append(file)
+    #for file in cnf_file_list:
+    file_dir = directory + file
     
-    #test evey file in directory
-    for file in cnf_file_list:
-        file_dir = directory + file
-        
-        # Cory Parsing - Slower ~ 0.185 sec for 1001 cnf files
-        #raw_file = read_file(file_dir)
-        #parsed_file = parsing_CNF_file(raw_file)
-        
-        # Jacob Parsing - Faster use this ~0.149 sec for 1001 cnf files
-        parsed_file = parse(file_dir)
-        
-        num_elem = len(parsed_file)
-        num_lit_in_ele = len(parsed_file[0])
-        num_lit = num_lit_in_ele*num_elem
-        #print(f"Number of literals:  {num_lit}")
 
+    parsed_file = parse(file_dir)
+    result = sat_solver_DPLL(parsed_file)
+    num_elem = len(parsed_file)
+    num_lit_in_ele = len(parsed_file[0])
+    num_lit = num_lit_in_ele*num_elem
+    #print(f"Number of literals:  {num_lit}")
+    print(result)
+    """
     stop = timeit.default_timer() #stop runtime
     
     print('Time: ', (stop - start))
-    print(f'Total files ran: {len(cnf_file_list)}')
+    #print(f'Total files ran: {len(cnf_file_list)}')
   
 
 # Main body
