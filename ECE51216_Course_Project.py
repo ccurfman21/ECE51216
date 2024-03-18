@@ -211,13 +211,13 @@ def createFileList(directory):
 def main():
     
     start = timeit.default_timer() #start runtime
-    for i in range(10):
-        test_clauses = [[1,2,3],[1],[-1,4,-6],[5,3,-4]]
-        assignment = {-4:False, -6:False}
-        
-        ans = sat_solver_DPLL(test_clauses,assignment)
-       
-        print(ans)
+    
+    test_clauses = [[1,2,3],[1],[-1,4,-6],[5,3,-4]]
+    assignment = {-4:False, -6:False}
+    
+    ans = sat_solver_DPLL(test_clauses,assignment)
+    
+    print(ans)
     
     
     """
