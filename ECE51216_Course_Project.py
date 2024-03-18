@@ -37,7 +37,7 @@ import timeit
 
 # Functions
 
-# ______________________ DO NOT USE DELETE WHEN FINSISHED _______________________
+# ______________________ DO NOT USE DELETE WHEN FINISHED _______________________
 """
 def read_file(file_path):
      Read text file 
@@ -142,17 +142,18 @@ def parse(cnf_text):
 #____ Main ____
 def main():
     
-    start = timeit.default_timer()
+    start = timeit.default_timer() #start runtime
     
     directory = r'C:\\Users\\Administrator\\Documents\\GitHub\\ECE51216\\'
     cnf_file_list = []
     
+    #create file list from directory 
     for file in os.listdir(directory):
-        
         if os.path.isfile(os.path.join(directory, file)):
             if file.endswith('.cnf'):
                 cnf_file_list.append(file)
-         
+    
+    #test evey file in directory
     for file in cnf_file_list:
         file_dir = directory + file
         
@@ -168,7 +169,7 @@ def main():
         num_lit = num_lit_in_ele*num_elem
         #print(f"Number of literals:  {num_lit}")
 
-    stop = timeit.default_timer()
+    stop = timeit.default_timer() #stop runtime
     
     print('Time: ', (stop - start))
     print(f'Total files ran: {len(cnf_file_list)}')
