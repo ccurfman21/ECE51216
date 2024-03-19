@@ -114,7 +114,15 @@ def parsing_CNF_file(file_string):
 
 
 def parse(cnf_text):
-    """ Function That will open the text file and create a list of literals """
+    """ 
+    Function that reads a CNF (Conjunctive Normal Form) text file and extracts a list of literals.
+    
+    Parameters:
+        cnf_text (str): The path to the CNF text file.
+        
+    Returns:
+        list: A list of clauses, where each clause is represented as a list of literals.
+    """
     equation = []
     try:
         with open(cnf_text, 'r') as cnf: 
@@ -139,38 +147,50 @@ def parse(cnf_text):
         print("File not found")
 
 def sat_solver_DPLL(clauses,assignment={}):
-    #check for empty clauses
+    """ 
+    DPLL-based SAT solver algorithm for solving SAT problems.
+    
+    Parameters:
+        clauses (list): A list of clauses, where each clause is represented as a list of literals.
+        assignment (dict): A dictionary representing the current variable assignments (default is an empty dictionary).
+        
+    Returns:
+        list: A list containing either the satisfying assignment and 'SAT' or an indication of an unsatisfiable problem.
+    """
     def check_empty_clauses(clauses):
+        """ Helper function to check for empty clauses. """
         if any(len(clause) == 0 for clause in clauses):
             return True
-    
-    #check if solved   
+      
     def check_solved(clauses, assignment):
+        """ Helper function to check if the problem is solved. """
         count = 0
         not_solved = False
         for clause in clauses:
             for literal in clause:
-                if literal in assignment: #make sure literal has been assigned a value
+                cc = clause.index(literal) + 1
+                if abs(literal) in assignment: #make sure literal has been assigned a value
                     if  literal > 0:
                         test = True
                     else:
                         test = False       
-                    if assignment[literal] == test: 
+                    if assignment[abs(literal)] == test: #keep count of how many literals are assigned
                         count += 1
                         break
                     
                 #need to add something for UNSAT: if all literals in assignment.keys() --> unsat    
                 
-                elif (clause.index(literal) + 1) == len(clause): #set value to break out of outer for loop since it is not solved
+                elif (clause.index(literal) + 1) == len(clause): #if we hit the last literal in the clause, it is not solved yet
                         not_solved = True  
-            if not_solved:
+            if not_solved: #get out of loop since it is not solved
                 break
-            elif count == len(clauses):
+            elif count == len(clauses): #solved
                 return True
         return False
 
     #check for unit propagation
     def unit_propagation(clauses,assignment):
+        """ Helper function for unit propagation. """
         for clause in clauses:
             if len(clause) == 1:
                 if clause[0] > 0:
@@ -180,13 +200,14 @@ def sat_solver_DPLL(clauses,assignment={}):
         return assignment
     
     def literal_elim(clauses, assignment):
+        """ Helper function for literal elimination. """
         checked_literals = []
         for clause in clauses:
-            for literal in clause:     
-                if abs(literal) in checked_literals or abs(literal) in list(assignment.keys()):
+            for literal in clause:
+                if abs(literal) in checked_literals or abs(literal) in list(assignment.keys()): #skip literal if it already has been checked or has a value
                     continue
                 else:     
-                    if -literal not in [lit for cla in clauses for lit in cla if literal == abs(lit)]:
+                    if -literal not in [lit for cla in clauses for lit in cla if literal == abs(lit)]: #check if there is a negative value of the current literal
                         if literal > 0:
                             assignment[abs(literal)] = True
                         else:
@@ -196,7 +217,7 @@ def sat_solver_DPLL(clauses,assignment={}):
         return assignment
     
     def inner_DPLL_main(clauses, assignment):
-        
+        """ Main function for the inner DPLL algorithm. """
         unsat = check_empty_clauses(clauses)
         
         if unsat:
@@ -219,7 +240,15 @@ def sat_solver_DPLL(clauses,assignment={}):
     return inner_DPLL_main(clauses, assignment)
 
 def createFileList(directory):
-    #create file list from directory
+    """ 
+    Create a list of '.cnf' files found in the specified directory.
+    
+    Parameters:
+        directory (str): The path to the directory containing the files.
+        
+    Returns:
+        list: A list of filenames ending with '.cnf' found in the directory.
+    """
     cnf_file_list = []
     for file in os.listdir(directory):
         if os.path.isfile(os.path.join(directory, file)):
@@ -234,7 +263,7 @@ def main():
     
     start = timeit.default_timer() #start runtime
     
-    test_clauses = [[1,2,3],[1],[-1,4,-6],[5,3,-4]]
+    test_clauses = [[1,2,3],[1],[-1,-4,-6],[5,3,-4]]
     #assignment = {4:False, 6:False}
     
     ans = sat_solver_DPLL(test_clauses)
