@@ -147,20 +147,23 @@ def sat_solver_DPLL(clauses,assignment={}):
     #check if solved   
     def check_solved(clauses, assignment):
         count = 0
-        not_sat = False
+        not_solved = False
         for clause in clauses:
             for literal in clause:
-                if literal in assignment:
+                if literal in assignment: #make sure literal has been assigned a value
                     if  literal > 0:
                         test = True
                     else:
                         test = False       
-                    if assignment[literal] == test:
+                    if assignment[literal] == test: 
                         count += 1
                         break
-                    elif (literal.index() + 1) == len(clause):
-                        not_sat = True  
-            if not_sat:
+                    
+                #need to add something for UNSAT: if all literals in assignment.keys() --> unsat    
+                
+                elif (clause.index(literal) + 1) == len(clause): #set value to break out of outer for loop since it is not solved
+                        not_solved = True  
+            if not_solved:
                 break
             elif count == len(clauses):
                 return True
@@ -171,9 +174,25 @@ def sat_solver_DPLL(clauses,assignment={}):
         for clause in clauses:
             if len(clause) == 1:
                 if clause[0] > 0:
-                    assignment[clause[0]] = True
+                    assignment[abs(clause[0])] = True
                 else:
-                    assignment[clause[0]] = False
+                    assignment[abs(clause[0])] = False
+        return assignment
+    
+    def literal_elim(clauses, assignment):
+        checked_literals = []
+        for clause in clauses:
+            for literal in clause:     
+                if abs(literal) in checked_literals or abs(literal) in list(assignment.keys()):
+                    continue
+                else:     
+                    if -literal not in [lit for cla in clauses for lit in cla if literal == abs(lit)]:
+                        if literal > 0:
+                            assignment[abs(literal)] = True
+                        else:
+                            assignment[abs(literal)] = False
+                            
+                        checked_literals.append(abs(literal))
         return assignment
     
     def inner_DPLL_main(clauses, assignment):
@@ -189,11 +208,14 @@ def sat_solver_DPLL(clauses,assignment={}):
         
         assignment = unit_propagation(clauses, assignment)
         
+        asignment = literal_elim(clauses,assignment)
         
         
         sat = check_solved(clauses, assignment)
         if sat:
             return [assignment, 'SAT']
+        else:
+            return [assignment, 'UNSAT']
     return inner_DPLL_main(clauses, assignment)
 
 def createFileList(directory):
@@ -213,9 +235,9 @@ def main():
     start = timeit.default_timer() #start runtime
     
     test_clauses = [[1,2,3],[1],[-1,4,-6],[5,3,-4]]
-    assignment = {-4:False, -6:False}
+    #assignment = {4:False, 6:False}
     
-    ans = sat_solver_DPLL(test_clauses,assignment)
+    ans = sat_solver_DPLL(test_clauses)
     
     print(ans)
     
