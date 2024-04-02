@@ -19,62 +19,13 @@ Description:
 
 # Imports
 import os
-import pandas
-import numpy
+"import pandas"
+"import numpy"
 import timeit
-
-
-
-# Global Constants
-
-
-
-
-# Classes
-
-
-
+import sys 
+import random
 
 # Functions
-
-# ______________________ DO NOT USE DELETE WHEN FINISHED _______________________
-"""
-def read_file(file_path):
-     Read text file 
-    if os.path.exists(file_path):
-        with open(file_path, "r") as fo:
-            for line in fo:
-                if "p cnf" in line:
-                    file_contents = fo.read()       
-        fo.close()
-        #print(file_contents)    
-        return file_contents
-    else:
-        return "File Does Not Exist"
-    
-def parsing_CNF_file(file_string):
-    Parse CNF File into list
-    cnf = [i for i in file_string.split('\n')]
-    try:
-        for j in range(len(cnf)): 
-            if cnf[j] not in ['','%',' ','0']:
-                cnf[j] = [int(x) for x in cnf[j].split()] #convert to integers
-                if 0 in cnf[j]:
-                    cnf[j].remove(0)
-    except ValueError:
-        print(cnf[j])
-        print("Value Exception Error")
-        
-    try:
-        index = cnf.index('%')
-        cnf = cnf[:index]
-    except ValueError:
-        cnf = cnf
-
-    return cnf
-"""       
-# ___________________________________________________________________________________________________
-
 
 #____ Unit Propagation ____
 """
@@ -159,46 +110,66 @@ def sat_solver_DPLL(clauses,assignment={}):
     """
     def check_empty_clauses(clauses):
         """ Helper function to check for empty clauses. """
-        if any(len(clause) == 0 for clause in clauses):
-            return True
-      
-    def check_solved(clauses, assignment):
-        """ Helper function to check if the problem is solved. """
-        count = 0
-        not_solved = False
         for clause in clauses:
-            for literal in clause:
-                cc = clause.index(literal) + 1
-                if abs(literal) in assignment: #make sure literal has been assigned a value
-                    if  literal > 0:
-                        test = True
-                    else:
-                        test = False       
-                    if assignment[abs(literal)] == test: #keep count of how many literals are assigned
-                        count += 1
-                        break
-                    
-                #need to add something for UNSAT: if all literals in assignment.keys() --> unsat    
-                
-                elif (clause.index(literal) + 1) == len(clause): #if we hit the last literal in the clause, it is not solved yet
-                        not_solved = True  
-            if not_solved: #get out of loop since it is not solved
-                break
-            elif count == len(clauses): #solved
+            if len(clause) == 0:
                 return True
-        return False
-
+    
     #check for unit propagation
     def unit_propagation(clauses,assignment):
         """ Helper function for unit propagation. """
         for clause in clauses:
             if len(clause) == 1:
-                if clause[0] > 0:
-                    assignment[abs(clause[0])] = True
-                else:
-                    assignment[abs(clause[0])] = False
+                assignment[abs(clause[0])] = clause[0] > 0
+                #if clause[0] > 0:
+               #     assignment[abs(clause[0])] = True
+                #else:
+                 #   assignment[abs(clause[0])] = False
+
         return assignment
     
+    #Counter Function that counts the literals
+
+    def find_count(clauses):
+        counter = {}
+        for clause in clauses:
+            for literal in clause:
+                if literal in counter:
+                    counter[literal] += 1
+                else:
+                    counter[literal] = 1
+        return counter
+    
+    # Function that picks the literal based on the total number of apperances 
+    def literal_selection(clauses):
+        '''counter = find_count(clauses)
+        sorted_counter = sorted(counter, key=counter.get, reverse=True)
+        if sorted_counter:
+            return sorted_counter[0]
+        else:
+            None'''
+        counter = find_count(clauses)
+        return random.choice(list(counter.keys()))
+    
+    #Boolean Constraint Propagation
+    def bcp(clauses,assignment):
+        updated_clauses = []
+        for clause in clauses:
+            satisfied = False
+            modified_clauses = []
+            for literal in clause:
+                if literal in assignment: #checks if literal is already assigned
+                    if assignment[literal]: #checks if its true
+                        satisfied = True
+                        break
+                elif -literal not in assignment: #checks if the inverse of the literal is assigned
+                    modified_clauses.append(literal)
+            if not satisfied: # if clause is not satisfied
+                if modified_clauses: # checks #checks if there are literals left in the clause
+                    updated_clauses.append(modified_clauses)
+                else:
+                    return -1 # unsatisfiable
+            return updated_clauses
+    #pure literal 
     def literal_elim(clauses, assignment):
         """ Helper function for literal elimination. """
         checked_literals = []
@@ -206,38 +177,99 @@ def sat_solver_DPLL(clauses,assignment={}):
             for literal in clause:
                 if abs(literal) in checked_literals or abs(literal) in list(assignment.keys()): #skip literal if it already has been checked or has a value
                     continue
-                else:     
-                    if -literal not in [lit for cla in clauses for lit in cla if literal == abs(lit)]: #check if there is a negative value of the current literal
-                        if literal > 0:
-                            assignment[abs(literal)] = True
-                        else:
-                            assignment[abs(literal)] = False
-                            
-                        checked_literals.append(abs(literal))
+                else:
+                    same_literals = [lit for cla in clauses for lit in cla if literal == abs(lit)]
+                    if -literal not in same_literals: #check if there is a negative value of the current literal
+                        assignment[abs(literal)] = literal > 0
+
+                    checked_literals.append(abs(literal))
+                abs_literal = abs(literal)
+                if abs_literal not in assignment:
+                    assignment[abs_literal] = literal > 0
         return assignment
     
+    # Backtracking function
+    def backtracking(clauses, assignment):
+        
+        '''#Unit propagation
+        unit_assignment = unit_propagation(clauses, assignment)
+
+        #Pure literal
+        pure_assignment = literal_elim(clauses, assignment) 
+
+        assignment.update(unit_assignment)
+        assignment.update(pure_assignment)
+        
+        #Boolean constrain propagation
+        clauses = bcp(clauses, assignment)
+        
+        if clauses == -1:
+            return False
+        #Start with the literal with the most appearances
+        lit = literal_selection(clauses)
+        if lit is None:
+            return False
+
+        solution = backtracking(clauses, assignment + [lit])
+
+        if not solution:
+            solution = backtracking(clauses, assignment + [-lit])
+        return solution
+'''
+
+    # Unit propagation
+        unit_assignment = unit_propagation(clauses, assignment)
+
+    # Pure literal elimination
+        pure_assignment = literal_elim(clauses, assignment)
+
+        assignment.update(unit_assignment)
+        assignment.update(pure_assignment)
+
+    # Boolean constraint propagation
+        clauses = bcp(clauses, assignment)
+
+        if clauses == -1:
+            return False
+    
+    # Check if all clauses are satisfied
+        if all(len(clause) == 0 for clause in clauses):
+            return True
+
+    # Select an unassigned literal
+        lit = literal_selection(clauses)
+        if lit is None:
+            return False
+
+    # Try assigning true to the literal
+        assignment[lit] = True
+        if backtracking(clauses, assignment):
+            return True
+
+    # If assigning true doesn't lead to a solution, try assigning false
+        assignment[lit] = False
+        if backtracking(clauses, assignment):
+            return True
+
+    # If neither true nor false lead to a solution, backtrack
+        del assignment[lit]
+        return False
+
     def inner_DPLL_main(clauses, assignment):
-        """ Main function for the inner DPLL algorithm. """
+        #Runs the main code
         unsat = check_empty_clauses(clauses)
         
         if unsat:
             return ['Empty Clause', 'UNSAT']
-        
-        sat = check_solved(clauses, assignment)
-        if sat:
-            return [assignment, 'SAT']
-        
-        assignment = unit_propagation(clauses, assignment)
-        
-        asignment = literal_elim(clauses,assignment)
-        
-        
-        sat = check_solved(clauses, assignment)
-        if sat:
-            return [assignment, 'SAT']
+
+        if backtracking(clauses, assignment):
+            return [assignment, "SAT"]
         else:
-            return [assignment, 'UNSAT']
+            return[assignment, "UNSAT"]
+        
     return inner_DPLL_main(clauses, assignment)
+
+    
 
 def createFileList(directory):
     """ 
@@ -263,14 +295,13 @@ def main():
     
     start = timeit.default_timer() #start runtime
     
-    test_clauses = [[1,2,3],[1],[-1,-4,-6],[5,3,-4]]
+    test_clauses = parse("cnf.txt")
     #assignment = {4:False, 6:False}
     
     ans = sat_solver_DPLL(test_clauses)
     
     print(ans)
-    
-    
+
     """
     directory = r'C:\\Users\\Administrator\\Documents\\GitHub\\ECE51216\\'
     file = 'uf20-01.cnf'
