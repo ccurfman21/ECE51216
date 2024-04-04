@@ -1,6 +1,6 @@
 import timeit
 import random
-from collections import OrderedDict
+import os
 
 def parse(cnf_text): #parses cnf file into list of lists
     equation = []
@@ -79,7 +79,7 @@ def backtracking(clauses, assignment={}): #finds/assigns values to solve cnf
     assignment.update(new_assignment)
     #print(f'Assignment (pure/unit): {assignment}')
         
-    #select_lit = max(count, key = count.get)
+    #select_lit = max(count, key = count.get)#
     select_lit = random.choice(list(count.keys())) #select random literal thats remaining
     #print(f'Random Literal Selected: {select_lit}')
     
@@ -110,30 +110,44 @@ def backtracking(clauses, assignment={}): #finds/assigns values to solve cnf
 def make_letters(dict): #converts numbers and T/F to letters and 1/0
     letter_dict = {}
     for key, value in dict.items():
-         #make number a letter
         letter_dict[key] = 1 if value else 0  #change T/F to 1/0
     return letter_dict
 
 #____ Main ____
 def main():
-    start = timeit.default_timer() #start runtime
     
-    test_clauses = parse('aim-50-1_6-yes1-1.cnf')  #cnf2.txt #uf20-01.cnf unsat_cnf.txt
-    #test_clauses = parse(r'C:\\Users\\ccurf\\OneDrive\\Desktop\\ECE Masters Classes\\ECE 51216 - Digital Design\\cnf2_1.txt ')  #cnf2.txt #uf20-01.cnf
+    
+    #test_clauses = parse('aim-50-1_6-no-1.cnf')  #cnf2.txt #uf20-01.cnf unsat_cnf.txt
+    
     print('Started. Please Wait...')
-    sol = backtracking(test_clauses) #solve cnf
-
-    if sol:
-        letters =  make_letters(sol[1]) #convert numbers to letters
-        print('RESULT: SAT')
-        print('ASSIGNMENT: ',end=' ')
-        for key in letters.keys(): #print assignment dict
-            print(f'{key}={letters[key]}', end=' ' )
-    else:
-        print('UNSAT')
-       
-    stop = timeit.default_timer() #stop runtime   
-    print('\nTime: ', (stop - start))
+    
+    
+    
+    directory = 'C:\\Users\\Administrator\\Documents\\GitHub\\ECE51216\\'
+    cnf_file_list = []
+    
+    for file in os.listdir(directory):    
+        if os.path.isfile(os.path.join(directory, file)):
+            if file.endswith('.cnf'):
+                cnf_file_list.append(file)
+                
+    for file in cnf_file_list:
+        start = timeit.default_timer() #start runtime
+        test_clauses = parse(file)
+        sol = backtracking(test_clauses) #solve cnf
+        print(f'File Name: {file}')
+        
+        if sol:
+            letters =  make_letters(sol[1]) #convert numbers to letters 
+            print('RESULT: SAT')
+            print('ASSIGNMENT: ',end=' ')
+            for key in letters.keys(): #print assignment dict
+                print(f'{key}={letters[key]}', end=' ' )
+        else:
+            print('UNSAT')
+            
+        stop = timeit.default_timer() #stop runtime   
+        print('\nTime: ', (stop - start))
 
 # Main body
 if __name__ == "__main__":
