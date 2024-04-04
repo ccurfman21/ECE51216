@@ -55,45 +55,45 @@ def bcp(clauses, literal): #gets rid of satisfied clauses and removes opposite l
 def backtracking(clauses, assignment={}): #finds/assigns values to solve cnf
 
     count = find_count(clauses)
-    #print(f'\nCount: {count}')
+    print(f'\nCount: {count}')
     
-    #print(f'Updated Clause (start): {clauses}')
+    print(f'Updated Clause (start): {clauses}')
     
     units = [clause[0] for clause in clauses if len(clause) == 1] #find clauses that only have one literal and save the literal
-    #print(f'Unit Clauses: {units}')
+    print(f'Unit Clauses: {units}')
     
     pure = [key for key in count.keys() if -key not in count.keys()] #find literals that are a single polarity
-    #print(f'Pure Literals: {pure}')
+    print(f'Pure Literals: {pure}')
     
     pure_units = list(set(units) | set(pure)) #take union of two list without repeating literals
-    #print(f'Combo of Pure and Unit: {pure_units}')
+    print(f'Combo of Pure and Unit: {pure_units}')
     
     for lit in pure_units: #eliminate all pure and unit literals from clauses
         clauses = bcp(clauses, lit)
-        #print(f'Updated Clause (pure): {clauses}')
+        print(f'Updated Clause (pure): {clauses}')
         
         if clauses is None :
             return False
         
     new_assignment = {abs(lit): lit > 0 for lit in pure_units} #generate assignment
     assignment.update(new_assignment)
-    #print(f'Assignment (pure/unit): {assignment}')
+    print(f'Assignment (pure/unit): {assignment}')
         
     #select_lit = max(count, key = count.get)
     select_lit = random.choice(list(count.keys())) #select random literal thats remaining
-    #print(f'Random Literal Selected: {select_lit}')
+    print(f'Random Literal Selected: {select_lit}')
     
     copy_clauses = clauses.copy()
     clauses = bcp(clauses,select_lit)
     if clauses is None:
         return False
-    #print(f'Updated Clause (select): {clauses}')
+    print(f'Updated Clause (select): {clauses}')
         
     if len(clauses) == 0:
         return True, assignment
     else:
         assignment[abs(select_lit)] = select_lit > 0
-        #print(f'Assignment (first): {assignment}')
+        print(f'Assignment (first): {assignment}')
         
         sol= backtracking(clauses, assignment)
         if not sol: #backtracking last assigned variable failed, swap that variables assignment and try again
@@ -101,7 +101,7 @@ def backtracking(clauses, assignment={}): #finds/assigns values to solve cnf
             copy_clauses = bcp(copy_clauses, -select_lit)
             if copy_clauses is None:
                 return False
-            #print(f'Assignment (second): {assignment}')
+            print(f'Assignment (second): {assignment}')
             
             sol = backtracking(copy_clauses, assignment)
         
