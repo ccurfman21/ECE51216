@@ -29,7 +29,7 @@ def find_count(clauses): #counts literals
                 counter[literal] = 1
     return counter
 
-def bcp(clauses, literal): #gets rid of satisfied clauses and removes opposite literal in other clauses
+def bcps(clauses, literal): #gets rid of satisfied clauses and removes opposite literal in other clauses
     neg_lit = -literal
     new_clauses = []
     for clause in clauses:
@@ -44,7 +44,7 @@ def bcp(clauses, literal): #gets rid of satisfied clauses and removes opposite l
             new_clauses.append(clause)
     return new_clauses
 
-def bcps(clauses, literal): #gets rid of satisfied clauses and removes opposite literal in other clauses
+def bcp(clauses, literal): #gets rid of satisfied clauses and removes opposite literal in other clauses
     new_clauses = []
     for clause in clauses:
         if literal in clause: #don't keep clauses with literal in it (they are SAT already)
@@ -61,7 +61,7 @@ def bcps(clauses, literal): #gets rid of satisfied clauses and removes opposite 
             new_clauses.append(clause)
     return new_clauses
 
-def backtracking(clauses, assignment={}): #finds/assigns values to solve cnf
+def backtracking(clauses, assignment=[]): #finds/assigns values to solve cnf
 
     count = find_count(clauses)
     #print(f'\nCount: {count}')
@@ -70,12 +70,12 @@ def backtracking(clauses, assignment={}): #finds/assigns values to solve cnf
     
     units = [clause[0] for clause in clauses if len(clause) == 1] #find clauses that only have one literal and save the literal
     #print(f'Unit Clauses: {units}')
+    
     pure = [key for key in count.keys() if -key not in count.keys()] #find literals that are a single polarity
     #print(f'Pure Literals: {pure}')
     
     pure_units = list(set(units) | set(pure)) #take union of two list without repeating literals
     #print(f'Combo of Pure and Unit: {pure_units}')
-    
     while len(pure_units) > 0:
         for lit in pure_units: #eliminate all pure and unit literals from clauses
             clauses = bcp(clauses, lit)
@@ -84,18 +84,17 @@ def backtracking(clauses, assignment={}): #finds/assigns values to solve cnf
             if clauses is None :
                 #print(f'Updated Clause (pure): {clauses}') 
                 return False
-        units = [clause[0] for clause in clauses if len(clause) == 1] #find clauses that only have one literal and save the literal
-        pure = [key for key in count.keys() if -key not in count.keys()] #find literals that are a single polarity
-        pure_units = list(set(units) | set(pure)) #take union of two list without repeating literals
+        pure = [key for key in count.keys() if -key not in count.keys()]
+        units = [clause[0] for clause in clauses if len(clause) == 1]
+        pure_units = list(set(units) | set(pure))
         count = find_count(clauses)
-        new_assignment = {abs(lit): lit > 0 for lit in pure_units} #generate assignment
-        assignment.update(new_assignment)
-    
-    
+        
+        new_assignment = [lit for lit in pure_units] #generate assignment
+        assignment.extend(new_assignment)
     
     #print(f'Assignment (pure/unit): {assignment}')
     if len(clauses) == 0:
-        return True, assignment
+        return True, assignment 
     select_lit = random.choice(list(count.keys())) #select random literal thats remaining
     #select_lit = int(input('Select Lit: '))
     #print(f'Random Literal Selected: {select_lit}')
@@ -110,47 +109,49 @@ def backtracking(clauses, assignment={}): #finds/assigns values to solve cnf
     if len(clauses) == 0:
         return True, assignment
     else:
-        assignment[abs(select_lit)] = select_lit > 0
         #print(f'Assignment (first): {assignment}')
         
-        assignment_copy = assignment.copy()
-        sol= backtracking(clauses, assignment_copy)
+        #assignment_copy = assignment.copy()
+        sol= backtracking(clauses, assignment + [select_lit])
         if not sol: #backtracking last assigned variable failed, swap that variables assignment and try again
-            assignment[abs(select_lit)] = select_lit < 0
+        
             copy_clauses = bcp(copy_clauses, -select_lit)
             if copy_clauses is None:
                 return False
            # print(f'Assignment (second): {assignment}')
-            assignment_copy = assignment.copy()
-            sol = backtracking(copy_clauses, assignment_copy)
+            
+            sol = backtracking(copy_clauses, assignment + [-select_lit])
     
     #print(f'Sol: {sol}')
     return sol
 
-def make_letters(dict): #converts numbers and T/F to letters and 1/0
-    letter_dict = {}
-    for key, value in dict.items():
-         #make number a letter
-        letter_dict[key] = 1 if value else 0  #change T/F to 1/0
-    return letter_dict
+def format(assignment): #converts numbers and T/F to letters and 1/0
+    formated_list = []
+    assignment = list(set(assignment))
+    assignment = sorted(assignment, key=abs)
+    for ass in assignment:
+        if ass < 0:
+            formated_list = formated_list + [str(abs(ass)) + '=0']
+        else: 
+            formated_list = formated_list +[str(ass) + '=1']
+    return formated_list
 
 #____ Main ____
 def main():
     
-    test_clauses = parse('aim-50-1_6-yes1-1.cnf')  #cnf2.txt #uf20-01.cnf unsat_cnf.txt aim-50-1_6-yes1-1.cnf
+    
+    test_clauses = parse('uf20-01.cnf')  #cnf2.txt #uf20-01.cnf unsat_cnf.txt aim-50-1_6-yes1-1.cnf
     
     #test_clauses = parse(r'C:\\Users\\ccurf\\OneDrive\\Desktop\\ECE Masters Classes\\ECE 51216 - Digital Design\\cnf2_1.txt ')  #cnf2.txt #uf20-01.cnf
        
     start = timeit.default_timer() #start runtime
     print('Started. Please Wait...')
     sol = backtracking(test_clauses) #solve cnf
-    stop = timeit.default_timer() #stop runtime  
+    stop = timeit.default_timer() #stop runtime 
     if sol:
-        letters =  make_letters(sol[1]) #convert numbers to letters
+        letters =  format(sol[1]) #convert numbers to letters
         print('RESULT: SAT')
-        print('ASSIGNMENT: ',end=' ')
-        for key in letters.keys(): #print assignment dict
-            print(f'{key}={letters[key]}', end=' ' )
+        print('ASSIGNMENT:', *letters, sep=' ')
     else:
         print('UNSAT')
     
