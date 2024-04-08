@@ -95,7 +95,8 @@ def backtracking(clauses, assignment=[]): #finds/assigns values to solve cnf
     #print(f'Assignment (pure/unit): {assignment}')
     if len(clauses) == 0:
         return True, assignment 
-    select_lit = random.choice(list(count.keys())) #select random literal thats remaining
+    #select_lit = random.choice(list(count.keys())) #select random literal thats remaining
+    select_lit = max(count, key = count.get)
     #select_lit = int(input('Select Lit: '))
     #print(f'Random Literal Selected: {select_lit}')
     
@@ -140,7 +141,7 @@ def format(assignment): #converts numbers and T/F to letters and 1/0
 def main():
     
     
-    test_clauses = parse('uf20-01.cnf')  #cnf2.txt #uf20-01.cnf unsat_cnf.txt aim-50-1_6-yes1-1.cnf
+    test_clauses = parse('uuf200-01.cnf')  #cnf2.txt #uf20-01.cnf unsat_cnf.txt aim-50-1_6-yes1-1.cnf
     
     #test_clauses = parse(r'C:\\Users\\ccurf\\OneDrive\\Desktop\\ECE Masters Classes\\ECE 51216 - Digital Design\\cnf2_1.txt ')  #cnf2.txt #uf20-01.cnf
        
